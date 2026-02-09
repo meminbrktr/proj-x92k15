@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="tr">
+
+
+<head>
+
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <link rel="stylesheet" href="style.css" />
+    <title>Zeynep Sümeyra için — Özel Giriş</title>
+        <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400&display=swap" rel="stylesheet">
+    <style>
+        
+
+
+        </style>
+        </head>
+        <body>
+            <!-- 🗺️ Haritaya Git Butonu -->
+<a href="map.html" class="map-btn" aria-label="Haritaya git">
+   AÇIL ARTIK
+</a>
+
+        <div class="overlay" id="gate" role="dialog" aria-labelledby="gateTitle" aria-describedby="gateDesc">
+        <div class="card" id="card">
+            <div class="header">
+            <div class="lock-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M7 10V8a5 5 0 1110 0v2" stroke="#ffb3c6" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <rect x="4.5" y="10.5" width="15" height="8" rx="2.2" fill="#2b0206" stroke="#ff6b9a" stroke-width="1" />
+            </svg>
+            </div>
+            <div style="text-align:left">
+            <h2 id="gateTitle">Zeynep Sümeyra'ya atfedilmiştir..</h2>
+            <div style="font-size:13px;color:#ffdfe6"></div>
+            </div>
+            </div>
+
+            <p class="lead" id="gateDesc">Devam etmek için giriş kodunu girin.</p>
+            <div class="pw" aria-hidden="false">
+            <label for="pw" class="sr-only">Giriş kodu</label>
+            <input id="pw" type="password" inputmode="numeric" maxlength="8" placeholder="Giriş kodu" aria-label="Giriş kodu" autofocus />
+            <button id="go" aria-label="Giriş yap">Giriş</button>
+            </div>
+            <div class="hint"></div>
+        </div>
+        </div>
+
+        <main class="stage" id="stage" aria-live="polite">
+            <div class="petals" id="petals"></div>
+
+        <!-- Ana sayfa: ortada açılan ajanda -->
+        <div class="diary" id="diary" aria-hidden="true">
+            <div class="journal" aria-hidden="false">
+            <div class="book" id="book" role="region" aria-label="Günlük">
+            <div class="cover front" aria-hidden="true">
+                <span class="cover-title">Sümoş ve Mehmet</span>
+
+            </div>
+
+
+            <!-- Sayfalar (ilk sayfa en üstte) -->
+            <div class="page" data-index="0" role="article" tabindex="0">
+            <div class="inner">
+                <h3>İlk Tanışma</h3>
+                <p>O gün yağmur hafifçe çiseledi, senin gülüşün karanlığı aydınlatmıştı. Hâlâ unutamam.</p>
+            </div>
+            </div>
+
+            <div class="page" data-index="1" role="article" tabindex="0">
+            <div class="inner">
+                <h3>İlk Beraberlik</h3>
+                <p>Beraber izlediğimiz film ve sonra yürüdüğümüz sahil... Elini tutmak içimi ısıtmıştı.</p>
+            </div>
+            </div>
+
+            <div class="page" data-index="2" role="article" tabindex="0">
+            <div class="inner">
+                <h3>Küçük Sürpriz</h3>
+                <p>Sana hazırladığım o küçük hediye yüzündeki ifadeyi görmek içindi. Her anın kıymetli.</p>
+            </div>
+            </div>
+
+            <div class="page" data-index="3" role="article" tabindex="0">
+            <div class="inner">
+                <h3>Gelecek</h3>
+                <p>Seninle daha nice an biriktirmek istiyorum; hep yanında olmak en büyük dileğim.</p>
+            </div>
+            </div>
+
+            <div class="cover back" aria-hidden="true">Son</div>
+            </div>
+            </div>
+
+            <div class="controls" aria-hidden="false">
+            <button id="prev" aria-label="Önceki">Geri</button>
+            <div class="page-indicator" id="pageIndicator">1 / 4</div>
+            <button id="next" aria-label="Sonraki">İleri</button>
+            </div>
+        </div>
+        </main>
+<!-- 🎉 Tebrik Kartı -->
+<div class="overlay hidden" id="congrats">
+  <div class="card" style="max-width:420px">
+    <h2>Hoş geldin</h2>
+    <p class="lead">
+      Bu sayfalar,<br>
+      sabırla girilen bir kapının<br>
+      ardında saklıydı.
+    </p>
+    <button id="continueDiary"
+      style="
+        margin-top:14px;
+        padding:10px 16px;
+        border-radius:10px;
+        border:none;
+        background:linear-gradient(90deg,var(--accent),var(--accent2));
+        color:white;
+        font-weight:700;
+        cursor:pointer;
+      ">
+      Sürprizi Gör
+    </button>
+  </div>
+</div>
+
+<script>
+(function(){
+
+  let hasOpenedCover = false;
+  let isFlipping = false;
+  let petalsPlayed = false;
+
+  // 🔒 Geri animasyonunda sayfa clicklerini kilitler
+  let suppressPageClick = false;
+
+  // 🔐 basit obfuskasyon
+  function getReal(){
+    const enc = [50^17,57^17,50^17,51^17,49^17,54^17,54^17];
+    return String.fromCharCode(...enc.map(n => n ^ 17));
+  }
+
+  const gate = document.getElementById('gate');
+  const pw = document.getElementById('pw');
+  const go = document.getElementById('go');
+  const card = document.getElementById('card');
+
+  const diary = document.getElementById('diary');
+  const book = document.getElementById('book');
+  const pages = Array.from(document.querySelectorAll('.page'));
+  const nextBtn = document.getElementById('next');
+  const prevBtn = document.getElementById('prev');
+  const indicator = document.getElementById('pageIndicator');
+
+  let current = 0;
+  const total = pages.length;
+
+  pages.forEach((p,i)=>p.style.setProperty('--idx',i));
+
+  function updateIndicator(){
+    indicator.textContent = (current + 1) + ' / ' + total;
+  }
+
+  function showDiary(){
+    diary.setAttribute('aria-hidden','false');
+    setTimeout(()=>diary.classList.add('show'),30);
+    setTimeout(triggerJasminePetals,120);
+    updateIndicator();
+  }
+
+  function hideGate(){
+    gate.classList.add('hidden');
+    setTimeout(()=>gate.style.display='none',520);
+  }
+
+  function showCongrats(){
+    hideGate();
+
+    const congrats = document.getElementById('congrats');
+    const btn = document.getElementById('continueDiary');
+
+    setTimeout(()=>congrats.classList.remove('hidden'),400);
+
+    btn.onclick = ()=>{
+      congrats.classList.add('hidden');
+      setTimeout(()=>{
+        congrats.style.display='none';
+        showDiary();
+      },400);
+    };
+  }
+
+  function unlock(){
+    const val = pw.value.trim();
+    if(val === getReal()){
+      sessionStorage.setItem('anniv_unlocked','1');
+      showCongrats();
+      return;
+    }
+    card.classList.remove('shake');
+    void card.offsetWidth;
+    card.classList.add('shake');
+    pw.value='';
+    pw.focus();
+  }
+
+  go.addEventListener('click',unlock);
+  pw.addEventListener('keydown',e=>{
+    if(e.key==='Enter') unlock();
+  });
+
+  // 📖 sayfa çevirme
+  function performFlip(page){
+    if(!page) return;
+    const idx = Number(page.dataset.index);
+    page.style.zIndex = 200;
+    page.classList.add('flipped');
+    setTimeout(()=>page.style.zIndex = 10 + idx,900);
+  }
+
+  function flipForward(){
+    if(isFlipping || current >= total) return;
+
+    isFlipping = true;
+    suppressPageClick = true;
+
+    if(!hasOpenedCover){
+      book.classList.add('open');
+      hasOpenedCover = true;
+
+      setTimeout(()=>{
+        isFlipping = false;
+        suppressPageClick = false;
+      },850);
+
+      return;
+    }
+
+    const page = pages[current];
+    performFlip(page);
+    current++;
+    updateIndicator();
+
+    setTimeout(()=>{
+      isFlipping = false;
+      suppressPageClick = false;
+    },950);
+  }
+
+  function flipBackward(){
+    if(isFlipping) return;
+
+    isFlipping = true;
+    suppressPageClick = true;
+
+    // 👉 Kapak açık + hiç sayfa çevrilmediyse kapağı kapat
+    if(hasOpenedCover && current === 0){
+      book.classList.remove('open');
+      hasOpenedCover = false;
+
+      setTimeout(()=>{
+        isFlipping = false;
+        suppressPageClick = false;
+      },700);
+
+      return;
+    }
+
+    if(current <= 0){
+      isFlipping = false;
+      suppressPageClick = false;
+      return;
+    }
+
+    // 🔥 KRİTİK: önce current geri alınır
+    current--;
+
+    const page = pages[current];
+    page.classList.remove('flipped');
+    page.style.zIndex = 200;
+
+    setTimeout(()=>{
+      pages.forEach((p,i)=>p.style.zIndex = 70 - i);
+    },860);
+
+    updateIndicator();
+
+    setTimeout(()=>{
+      isFlipping = false;
+      suppressPageClick = false;
+    },950);
+  }
+
+  nextBtn.addEventListener('click',flipForward);
+  prevBtn.addEventListener('click',flipBackward);
+
+  // 👉 Sayfaya tıklayınca ileri (geri bug'ı burada çözülüyor)
+  pages.forEach(p=>{
+    p.addEventListener('click',()=>{
+      if(suppressPageClick) return;
+      if(sessionStorage.getItem('anniv_unlocked')!=='1') return;
+
+      const idx = Number(p.dataset.index);
+      if(idx === current) flipForward();
+    });
+  });
+
+  function resetPages(){
+    pages.forEach((p,i)=>{
+      p.classList.remove('flipped');
+      p.style.zIndex = 70 - i;
+    });
+    current = 0;
+    hasOpenedCover = false;
+    updateIndicator();
+    book.classList.remove('open');
+  }
+
+  if(sessionStorage.getItem('anniv_unlocked')==='1'){
+    hideGate();
+    resetPages();
+    showDiary();
+  }
+
+function triggerJasminePetals(){
+  if(petalsPlayed) return;
+  petalsPlayed = true;
+
+  const wrap = document.getElementById('petals');
+  if(!wrap) return;
+
+  const count = window.innerWidth < 600 ? 14 : 22;
+
+  for(let i=0;i<count;i++){
+    const p = document.createElement('div');
+
+    p.className =
+      'petal ' +
+      (Math.random() > 0.7 ? 'large' : Math.random() > 0.4 ? 'small' : '');
+
+    p.style.left = Math.random()*100 + '%';
+    p.style.animationDuration = (4 + Math.random()*3) + 's';
+    p.style.animationDelay = (Math.random()*1.2) + 's';
+
+    // 🔥 KRİTİK SATIRLAR
+    p.style.setProperty('--drift', (Math.random()*140 - 70) + 'px');
+    p.style.setProperty('--spin', (Math.random()*240 - 120) + 'deg');
+
+    wrap.appendChild(p);
+    p.addEventListener('animationend', ()=>p.remove());
+  }
+
+  setTimeout(()=> wrap.innerHTML='', 9000);
+}
+
+
+})();
+</script>
+
+
+  </div>
+</div>
+
+        </body>
+        </html>

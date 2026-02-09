@@ -1,0 +1,98 @@
+<!-- ================= map.html ================= -->
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Birlikte Yürüdüğümüz Yer</title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="map.css" />
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Montserrat:wght@300;500&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <div class="overlay"></div>
+
+  <header class="hero">
+    <h1>Her Şeyin Başladığı Yer</h1>
+    <p>Burada yürüdük, burada sustuk, burada hissettik…</p>
+    <span class="scroll">↓ aşağı kaydır</span>
+  </header>
+
+  <section class="map-section">
+    <div class="map-frame">
+<iframe src="https://www.google.com/maps/embed?pb=!4v1770412308830!6m8!1m7!1sXda07817YPWNCFmlyyZSQw!2m2!1d40.21619218918907!2d28.96461110595939!3f12.019371093708685!4f-0.5033113113392318!5f0.7820865974627469" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+    </div>
+  </section>
+
+  <section class="story">
+    <h2>Bu Sokak Bir Şeyleri Değiştirdi</h2>
+    <p>
+      Belki başkaları için sıradan bir yoldu…
+      Ama benim için seni fark ettiğim andı.
+      Adımlarımız aynı ritimdeydi,
+      kalbim ilk kez bu kadar netti.
+    </p>
+  </section>
+<section class="spotify-section">
+  <div class="spotify-card">
+<div class="cover-frame">
+  <div class="cover-slider">
+    <img src="zm3.jpeg" class="active">
+    <img src="zm1.jpeg">
+    <img src="zm7.jpeg">
+    <img src="zm2.jpeg">
+    <img src="zm4.jpeg">
+    <img src="zm5.jpeg">
+    <img src="zm6.jpeg">
+  </div>
+</div>
+
+    <div class="track-info">
+      <h3>Sen Bir Meleksin</h3>
+      <span>Kargo</span>
+    </div>
+
+    <div class="progress">
+      <div class="progress-fill"></div>
+    </div>
+
+    <div class="controls">
+      <button class="play-btn">▶</button>
+    </div>
+
+  </div>
+</section>
+
+  <footer>
+    <p>♥ Bu site sadece ikimiz için</p>
+  </footer>
+<script>
+  const slides = document.querySelectorAll(".cover-slider img");
+  const progressFill = document.querySelector(".progress-fill");
+
+  let index = 0;
+
+  const slideDuration = 3500;      // fotoğraf geçiş süresi
+  const progressDuration = 24.5;  // 🔥 SADECE BURAYI DEĞİŞTİR (saniye)
+
+  /* Progress bar süresi */
+  progressFill.style.animationDuration = progressDuration + "s";
+
+  /* Slider */
+  setInterval(() => {
+    slides[index].classList.remove("active");
+    index = (index + 1) % slides.length;
+    slides[index].classList.add("active");
+  }, slideDuration);
+</script>
+
+</body>
+</html>
+
+
+
+
