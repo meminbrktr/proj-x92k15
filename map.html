@@ -13,6 +13,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Montserrat:wght@300;500&display=swap" rel="stylesheet">
 </head>
 <body>
+  <canvas id="fluid-bg" aria-hidden="true"></canvas>
 
   <div class="overlay"></div>
 
@@ -71,28 +72,538 @@
     <p>♥ Bu site sadece ikimiz için</p>
   </footer>
 <script>
-  const slides = document.querySelectorAll(".cover-slider img");
-  const progressFill = document.querySelector(".progress-fill");
+  (() => {
+    const fluidCanvas = document.getElementById("fluid-bg");
+    const fluidCtx = fluidCanvas ? fluidCanvas.getContext("2d", { alpha: false, desynchronized: true }) : null;
 
-  let index = 0;
+    if (fluidCanvas && fluidCtx) {
+      const lowCanvas = document.createElement("canvas");
+      const lowCtx = lowCanvas.getContext("2d", { alpha: false });
 
-  const slideDuration = 3500;      // fotoğraf geçiş süresi
-  const progressDuration = 24.5;  // 🔥 SADECE BURAYI DEĞİŞTİR (saniye)
+      if (lowCtx) {
+        const isTouch = window.matchMedia("(pointer: coarse)").matches;
+        const cellSize = isTouch ? 14 : 9;
+        const viscosity = 0.00016;
+        const diffusion = 0.0001;
+        const pressureIterations = isTouch ? 6 : 8;
+        const baseDecay = isTouch ? 0.983 : 0.991;
+        const fixedStep = isTouch ? (1 / 50) : (1 / 60);
+        const neonPalette = [
+          [255, 61, 96],   // neon red
+          [255, 72, 220],  // neon pink
+          [173, 95, 255],  // neon violet
+          [74, 170, 255],  // neon blue
+          [44, 255, 174]   // neon emerald
+        ];
 
-  /* Progress bar süresi */
-  progressFill.style.animationDuration = progressDuration + "s";
+        const minGridW = isTouch ? 46 : 72;
+        const minGridH = isTouch ? 28 : 40;
+        let width = 0;
+        let height = 0;
+        let dpr = 1;
+        let gridW = 0;
+        let gridH = 0;
+        let gridSize = 0;
+        let cellW = 1;
+        let cellH = 1;
+        let imageData = null;
+        let isPageVisible = true;
 
-  /* Slider */
-  setInterval(() => {
-    slides[index].classList.remove("active");
-    index = (index + 1) % slides.length;
-    slides[index].classList.add("active");
-  }, slideDuration);
+        let u;
+        let v;
+        let uPrev;
+        let vPrev;
+        let densR;
+        let densRPrev;
+        let densG;
+        let densGPrev;
+        let densB;
+        let densBPrev;
+        let pressure;
+        let divergence;
+
+        const pointer = {
+          active: false,
+          x: 0,
+          y: 0,
+          screenX: 0,
+          screenY: 0,
+          lastX: 0,
+          lastY: 0,
+          vx: 0,
+          vy: 0,
+          expires: 0,
+          colorIndex: 0,
+          colorShiftAt: 0,
+          energy: 0
+        };
+
+        function IX(x, y) {
+          return x + (gridW + 2) * y;
+        }
+
+        function resizeFluid() {
+          dpr = Math.min(window.devicePixelRatio || 1, 2);
+          width = window.innerWidth;
+          height = window.innerHeight;
+
+          fluidCanvas.width = Math.max(1, Math.floor(width * dpr));
+          fluidCanvas.height = Math.max(1, Math.floor(height * dpr));
+          fluidCanvas.style.width = width + "px";
+          fluidCanvas.style.height = height + "px";
+          fluidCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+          gridW = Math.max(minGridW, Math.floor(width / cellSize));
+          gridH = Math.max(minGridH, Math.floor(height / cellSize));
+          gridSize = (gridW + 2) * (gridH + 2);
+          cellW = width / gridW;
+          cellH = height / gridH;
+
+          lowCanvas.width = gridW;
+          lowCanvas.height = gridH;
+          imageData = lowCtx.createImageData(gridW, gridH);
+
+          u = new Float32Array(gridSize);
+          v = new Float32Array(gridSize);
+          uPrev = new Float32Array(gridSize);
+          vPrev = new Float32Array(gridSize);
+          densR = new Float32Array(gridSize);
+          densRPrev = new Float32Array(gridSize);
+          densG = new Float32Array(gridSize);
+          densGPrev = new Float32Array(gridSize);
+          densB = new Float32Array(gridSize);
+          densBPrev = new Float32Array(gridSize);
+          pressure = new Float32Array(gridSize);
+          divergence = new Float32Array(gridSize);
+
+          fluidCtx.globalCompositeOperation = "source-over";
+          fluidCtx.globalAlpha = 1;
+          fluidCtx.filter = "none";
+          fluidCtx.fillStyle = "#050505";
+          fluidCtx.fillRect(0, 0, width, height);
+        }
+
+        function clamp(value, min, max) {
+          return value < min ? min : value > max ? max : value;
+        }
+
+        function addSource(target, source, dt) {
+          for (let i = 0; i < gridSize; i++) {
+            target[i] += source[i] * dt;
+          }
+        }
+
+        function setBounds(b, x) {
+          for (let i = 1; i <= gridW; i++) {
+            x[IX(i, 0)] = b === 2 ? -x[IX(i, 1)] : x[IX(i, 1)];
+            x[IX(i, gridH + 1)] = b === 2 ? -x[IX(i, gridH)] : x[IX(i, gridH)];
+          }
+          for (let j = 1; j <= gridH; j++) {
+            x[IX(0, j)] = b === 1 ? -x[IX(1, j)] : x[IX(1, j)];
+            x[IX(gridW + 1, j)] = b === 1 ? -x[IX(gridW, j)] : x[IX(gridW, j)];
+          }
+          x[IX(0, 0)] = 0.5 * (x[IX(1, 0)] + x[IX(0, 1)]);
+          x[IX(0, gridH + 1)] = 0.5 * (x[IX(1, gridH + 1)] + x[IX(0, gridH)]);
+          x[IX(gridW + 1, 0)] = 0.5 * (x[IX(gridW, 0)] + x[IX(gridW + 1, 1)]);
+          x[IX(gridW + 1, gridH + 1)] = 0.5 * (x[IX(gridW, gridH + 1)] + x[IX(gridW + 1, gridH)]);
+        }
+
+        function linSolve(b, x, x0, a, c) {
+          const cRecip = 1 / c;
+          for (let k = 0; k < pressureIterations; k++) {
+            for (let j = 1; j <= gridH; j++) {
+              for (let i = 1; i <= gridW; i++) {
+                x[IX(i, j)] = (
+                  x0[IX(i, j)] +
+                  a * (
+                    x[IX(i - 1, j)] +
+                    x[IX(i + 1, j)] +
+                    x[IX(i, j - 1)] +
+                    x[IX(i, j + 1)]
+                  )
+                ) * cRecip;
+              }
+            }
+            setBounds(b, x);
+          }
+        }
+
+        function diffuse(b, x, x0, diff, dt) {
+          const a = dt * diff * gridW * gridH;
+          linSolve(b, x, x0, a, 1 + 4 * a);
+        }
+
+        function advect(b, d, d0, uField, vField, dt) {
+          const dtX = dt * gridW;
+          const dtY = dt * gridH;
+          for (let j = 1; j <= gridH; j++) {
+            for (let i = 1; i <= gridW; i++) {
+              let x = i - dtX * uField[IX(i, j)];
+              let y = j - dtY * vField[IX(i, j)];
+
+              x = clamp(x, 0.5, gridW + 0.5);
+              y = clamp(y, 0.5, gridH + 0.5);
+
+              const i0 = Math.floor(x);
+              const i1 = i0 + 1;
+              const j0 = Math.floor(y);
+              const j1 = j0 + 1;
+
+              const s1 = x - i0;
+              const s0 = 1 - s1;
+              const t1 = y - j0;
+              const t0 = 1 - t1;
+
+              d[IX(i, j)] =
+                s0 * (t0 * d0[IX(i0, j0)] + t1 * d0[IX(i0, j1)]) +
+                s1 * (t0 * d0[IX(i1, j0)] + t1 * d0[IX(i1, j1)]);
+            }
+          }
+          setBounds(b, d);
+        }
+
+        function project(uField, vField, pField, divField) {
+          const hX = 1 / gridW;
+          const hY = 1 / gridH;
+
+          for (let j = 1; j <= gridH; j++) {
+            for (let i = 1; i <= gridW; i++) {
+              divField[IX(i, j)] =
+                -0.5 * (
+                  (uField[IX(i + 1, j)] - uField[IX(i - 1, j)]) * hX +
+                  (vField[IX(i, j + 1)] - vField[IX(i, j - 1)]) * hY
+                );
+              pField[IX(i, j)] = 0;
+            }
+          }
+
+          setBounds(0, divField);
+          setBounds(0, pField);
+          linSolve(0, pField, divField, 1, 4);
+
+          for (let j = 1; j <= gridH; j++) {
+            for (let i = 1; i <= gridW; i++) {
+              uField[IX(i, j)] -= 0.5 * gridW * (pField[IX(i + 1, j)] - pField[IX(i - 1, j)]);
+              vField[IX(i, j)] -= 0.5 * gridH * (pField[IX(i, j + 1)] - pField[IX(i, j - 1)]);
+            }
+          }
+
+          setBounds(1, uField);
+          setBounds(2, vField);
+        }
+
+        function velocityStep(dt) {
+          addSource(u, uPrev, dt);
+          addSource(v, vPrev, dt);
+
+          uPrev.set(u);
+          vPrev.set(v);
+          diffuse(1, u, uPrev, viscosity, dt);
+          diffuse(2, v, vPrev, viscosity, dt);
+
+          project(u, v, pressure, divergence);
+
+          uPrev.set(u);
+          vPrev.set(v);
+          advect(1, u, uPrev, uPrev, vPrev, dt);
+          advect(2, v, vPrev, uPrev, vPrev, dt);
+
+          project(u, v, pressure, divergence);
+        }
+
+        function densityStep(dens, densPrev, dt) {
+          addSource(dens, densPrev, dt);
+          densPrev.set(dens);
+          diffuse(0, dens, densPrev, diffusion, dt);
+          densPrev.set(dens);
+          advect(0, dens, densPrev, u, v, dt);
+        }
+
+        function splat(cx, cy, radius, addR, addG, addB, forceX, forceY) {
+          const minX = Math.max(1, Math.floor(cx - radius));
+          const maxX = Math.min(gridW, Math.ceil(cx + radius));
+          const minY = Math.max(1, Math.floor(cy - radius));
+          const maxY = Math.min(gridH, Math.ceil(cy + radius));
+          const radiusPx = radius * Math.min(cellW, cellH);
+          const radiusSq = radiusPx * radiusPx;
+
+          for (let y = minY; y <= maxY; y++) {
+            for (let x = minX; x <= maxX; x++) {
+              const dx = (x - cx) * cellW;
+              const dy = (y - cy) * cellH;
+              const distSq = dx * dx + dy * dy;
+              if (distSq > radiusSq) continue;
+              const gaussian = Math.exp(-distSq / (radiusSq * 0.34));
+              const edgeFade = Math.max(0, 1 - distSq / radiusSq);
+              const falloff = gaussian * edgeFade;
+              const id = IX(x, y);
+              densRPrev[id] += addR * falloff;
+              densGPrev[id] += addG * falloff;
+              densBPrev[id] += addB * falloff;
+              uPrev[id] += forceX * falloff;
+              vPrev[id] += forceY * falloff;
+            }
+          }
+        }
+
+        function feedPointer(nowMs) {
+          if (!pointer.active) return;
+
+          const freshness = pointer.expires - nowMs;
+          if (freshness <= -220 && Math.abs(pointer.vx) + Math.abs(pointer.vy) < 0.06) {
+            pointer.active = false;
+            return;
+          }
+
+          const energy = clamp((freshness + 220) / 420, 0.2, 1);
+          const c1 = neonPalette[pointer.colorIndex];
+          const c2 = neonPalette[(pointer.colorIndex + 1) % neonPalette.length];
+          const mix = clamp(Math.hypot(pointer.vx, pointer.vy) / 7, 0.2, 0.7);
+
+          const redPulse = (c1[0] * (1 - mix) + c2[0] * mix) * (0.42 + 0.58 * energy);
+          const greenPulse = (c1[1] * (1 - mix) + c2[1] * mix) * (0.42 + 0.58 * energy);
+          const bluePulse = (c1[2] * (1 - mix) + c2[2] * mix) * (0.42 + 0.58 * energy);
+          const radius = (isTouch ? 5.8 : 4.8) + 3.8 * energy;
+          pointer.energy = energy;
+
+          splat(
+            pointer.x,
+            pointer.y,
+            radius,
+            redPulse,
+            greenPulse,
+            bluePulse,
+            pointer.vx * 1.6,
+            pointer.vy * 1.6
+          );
+
+          pointer.vx *= isTouch ? 0.76 : 0.82;
+          pointer.vy *= isTouch ? 0.76 : 0.82;
+        }
+
+        function renderPointerAura() {
+          if (!pointer.active || pointer.energy <= 0.02) return;
+          const c = neonPalette[pointer.colorIndex];
+          const coreRadius = (isTouch ? 24 : 20) + pointer.energy * (isTouch ? 38 : 46);
+          const haloRadius = coreRadius * (isTouch ? 2.8 : 3.2);
+
+          const halo = fluidCtx.createRadialGradient(
+            pointer.screenX, pointer.screenY, 0,
+            pointer.screenX, pointer.screenY, haloRadius
+          );
+          halo.addColorStop(0, `rgba(${c[0]},${c[1]},${c[2]},${0.28 * pointer.energy})`);
+          halo.addColorStop(0.26, `rgba(${c[0]},${c[1]},${c[2]},${0.2 * pointer.energy})`);
+          halo.addColorStop(0.62, `rgba(${c[0]},${c[1]},${c[2]},${0.08 * pointer.energy})`);
+          halo.addColorStop(1, "rgba(0,0,0,0)");
+
+          fluidCtx.globalCompositeOperation = "lighter";
+          fluidCtx.fillStyle = halo;
+          fluidCtx.beginPath();
+          fluidCtx.arc(pointer.screenX, pointer.screenY, haloRadius, 0, Math.PI * 2);
+          fluidCtx.fill();
+
+          const core = fluidCtx.createRadialGradient(
+            pointer.screenX, pointer.screenY, 0,
+            pointer.screenX, pointer.screenY, coreRadius
+          );
+          core.addColorStop(0, `rgba(255,255,255,${0.2 * pointer.energy})`);
+          core.addColorStop(0.35, `rgba(${c[0]},${c[1]},${c[2]},${0.42 * pointer.energy})`);
+          core.addColorStop(1, "rgba(0,0,0,0)");
+
+          fluidCtx.fillStyle = core;
+          fluidCtx.beginPath();
+          fluidCtx.arc(pointer.screenX, pointer.screenY, coreRadius, 0, Math.PI * 2);
+          fluidCtx.fill();
+        }
+
+        function decayDensities() {
+          for (let i = 0; i < gridSize; i++) {
+            densR[i] *= baseDecay;
+            densG[i] *= baseDecay;
+            densB[i] *= baseDecay;
+          }
+        }
+
+        function renderFluid() {
+          const px = imageData.data;
+          let p = 0;
+
+          for (let y = 1; y <= gridH; y++) {
+            for (let x = 1; x <= gridW; x++) {
+              const id = IX(x, y);
+              const r = densR[id];
+              const g = densG[id];
+              const b = densB[id];
+
+              const rN = 1 - Math.exp(-r * 0.024);
+              const gN = 1 - Math.exp(-g * 0.024);
+              const bN = 1 - Math.exp(-b * 0.024);
+              const glow = Math.max(rN, gN, bN);
+
+              const red = clamp(Math.floor(4 + 250 * rN + 30 * glow), 0, 255);
+              const green = clamp(Math.floor(4 + 250 * gN + 30 * glow), 0, 255);
+              const blue = clamp(Math.floor(4 + 250 * bN + 42 * glow), 0, 255);
+
+              px[p++] = red;
+              px[p++] = green;
+              px[p++] = blue;
+              px[p++] = 255;
+            }
+          }
+
+          lowCtx.putImageData(imageData, 0, 0);
+
+          fluidCtx.globalCompositeOperation = "source-over";
+          fluidCtx.globalAlpha = 1;
+          fluidCtx.filter = "none";
+          fluidCtx.fillStyle = "#050505";
+          fluidCtx.fillRect(0, 0, width, height);
+
+          fluidCtx.save();
+          fluidCtx.globalCompositeOperation = "lighter";
+          fluidCtx.filter = isTouch ? "blur(8px) saturate(168%)" : "blur(10px) saturate(182%)";
+          fluidCtx.globalAlpha = isTouch ? 0.7 : 0.8;
+          fluidCtx.drawImage(lowCanvas, 0, 0, width, height);
+          fluidCtx.filter = isTouch ? "blur(12px) saturate(176%)" : "blur(20px) saturate(196%)";
+          fluidCtx.globalAlpha = isTouch ? 0.16 : 0.3;
+          fluidCtx.drawImage(lowCanvas, 0, 0, width, height);
+          fluidCtx.restore();
+
+          fluidCtx.globalCompositeOperation = "screen";
+          fluidCtx.globalAlpha = 1;
+          fluidCtx.filter = "none";
+          fluidCtx.drawImage(lowCanvas, 0, 0, width, height);
+
+          renderPointerAura();
+
+          fluidCtx.globalCompositeOperation = "source-over";
+          fluidCtx.globalAlpha = 1;
+          fluidCtx.filter = "none";
+        }
+
+        function clearSources() {
+          uPrev.fill(0);
+          vPrev.fill(0);
+          densRPrev.fill(0);
+          densGPrev.fill(0);
+          densBPrev.fill(0);
+        }
+
+        function stepFluid(dt, nowMs) {
+          feedPointer(nowMs);
+
+          velocityStep(dt);
+          densityStep(densR, densRPrev, dt);
+          densityStep(densG, densGPrev, dt);
+          densityStep(densB, densBPrev, dt);
+
+          decayDensities();
+          clearSources();
+          renderFluid();
+        }
+
+        function pointerToGrid(clientX, clientY) {
+          return {
+            x: 1 + (clientX / width) * (gridW - 1),
+            y: 1 + (clientY / height) * (gridH - 1)
+          };
+        }
+
+        function disturbAt(clientX, clientY, nowMs) {
+          const pos = pointerToGrid(clientX, clientY);
+          if (!pointer.active) {
+            pointer.lastX = pos.x;
+            pointer.lastY = pos.y;
+            pointer.colorIndex = Math.floor(Math.random() * neonPalette.length);
+            pointer.colorShiftAt = nowMs;
+          }
+
+          const cellRef = Math.min(cellW, cellH);
+          const prevScreenX = pointer.screenX || clientX;
+          const prevScreenY = pointer.screenY || clientY;
+          const dxPx = clientX - prevScreenX;
+          const dyPx = clientY - prevScreenY;
+          const touchGain = isTouch ? 2.45 : 3.2;
+
+          // Pixel-normalized force keeps streak shape proportional on portrait screens.
+          pointer.vx += (dxPx / cellRef) * touchGain;
+          pointer.vy += (dyPx / cellRef) * touchGain;
+          if (nowMs - pointer.colorShiftAt > 85) {
+            pointer.colorIndex = (pointer.colorIndex + 1 + Math.floor(Math.random() * 2)) % neonPalette.length;
+            pointer.colorShiftAt = nowMs;
+          }
+          pointer.x = pos.x;
+          pointer.y = pos.y;
+          pointer.screenX = clientX;
+          pointer.screenY = clientY;
+          pointer.lastX = pos.x;
+          pointer.lastY = pos.y;
+          pointer.active = true;
+          pointer.expires = nowMs + 200;
+        }
+
+        let last = performance.now();
+        let accumulator = 0;
+
+        function animate(nowMs) {
+          if (!isPageVisible) {
+            last = nowMs;
+            requestAnimationFrame(animate);
+            return;
+          }
+
+          const frameDt = Math.min((nowMs - last) / 1000, 0.033);
+          last = nowMs;
+          accumulator += frameDt;
+
+          let steps = 0;
+          while (accumulator >= fixedStep && steps < 3) {
+            stepFluid(fixedStep, nowMs);
+            accumulator -= fixedStep;
+            steps++;
+          }
+
+          requestAnimationFrame(animate);
+        }
+
+        window.addEventListener("resize", resizeFluid, { passive: true });
+        window.addEventListener("mousemove", (e) => disturbAt(e.clientX, e.clientY, performance.now()), { passive: true });
+        window.addEventListener("touchstart", (e) => {
+          if (!e.touches || !e.touches[0]) return;
+          disturbAt(e.touches[0].clientX, e.touches[0].clientY, performance.now());
+        }, { passive: true });
+        window.addEventListener("touchmove", (e) => {
+          if (!e.touches || !e.touches[0]) return;
+          disturbAt(e.touches[0].clientX, e.touches[0].clientY, performance.now());
+        }, { passive: true });
+        document.addEventListener("visibilitychange", () => {
+          isPageVisible = document.visibilityState === "visible";
+        });
+
+        resizeFluid();
+        requestAnimationFrame(animate);
+      }
+    }
+
+    const slides = document.querySelectorAll(".cover-slider img");
+    const progressFill = document.querySelector(".progress-fill");
+    let index = 0;
+    const slideDuration = 3500;
+    const progressDuration = 24.5;
+
+    if (progressFill) {
+      progressFill.style.animationDuration = progressDuration + "s";
+    }
+
+    if (slides.length > 1) {
+      setInterval(() => {
+        slides[index].classList.remove("active");
+        index = (index + 1) % slides.length;
+        slides[index].classList.add("active");
+      }, slideDuration);
+    }
+  })();
 </script>
 
 </body>
 </html>
-
-
-
-
