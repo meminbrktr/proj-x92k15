@@ -82,12 +82,15 @@
 
       if (lowCtx) {
         const isTouch = window.matchMedia("(pointer: coarse)").matches;
-        const cellSize = isTouch ? 14 : 9;
+        const deviceMemory = Number(navigator.deviceMemory || 0);
+        const hwThreads = Number(navigator.hardwareConcurrency || 0);
+        const lowPower = isTouch || (deviceMemory > 0 && deviceMemory <= 4) || (hwThreads > 0 && hwThreads <= 6);
+        const cellSize = lowPower ? 18 : (isTouch ? 14 : 9);
         const viscosity = 0.00016;
         const diffusion = 0.0001;
-        const pressureIterations = isTouch ? 6 : 8;
-        const baseDecay = isTouch ? 0.983 : 0.991;
-        const fixedStep = isTouch ? (1 / 50) : (1 / 60);
+        const pressureIterations = lowPower ? 4 : (isTouch ? 6 : 8);
+        const baseDecay = lowPower ? 0.978 : (isTouch ? 0.983 : 0.991);
+        const fixedStep = lowPower ? (1 / 42) : (isTouch ? (1 / 50) : (1 / 60));
         const neonPalette = [
           [255, 61, 96],   // neon red
           [255, 72, 220],  // neon pink
@@ -96,8 +99,8 @@
           [44, 255, 174]   // neon emerald
         ];
 
-        const minGridW = isTouch ? 46 : 72;
-        const minGridH = isTouch ? 28 : 40;
+        const minGridW = lowPower ? 36 : (isTouch ? 46 : 72);
+        const minGridH = lowPower ? 22 : (isTouch ? 28 : 40);
         let width = 0;
         let height = 0;
         let dpr = 1;
@@ -108,6 +111,7 @@
         let cellH = 1;
         let imageData = null;
         let isPageVisible = true;
+        let lastDisturbTs = 0;
 
         let u;
         let v;
@@ -143,7 +147,7 @@
         }
 
         function resizeFluid() {
-          dpr = Math.min(window.devicePixelRatio || 1, 2);
+          dpr = lowPower ? 1 : Math.min(window.devicePixelRatio || 1, 2);
           width = window.innerWidth;
           height = window.innerHeight;
 
@@ -152,6 +156,8 @@
           fluidCanvas.style.width = width + "px";
           fluidCanvas.style.height = height + "px";
           fluidCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          fluidCtx.imageSmoothingEnabled = true;
+          lowCtx.imageSmoothingEnabled = true;
 
           gridW = Math.max(minGridW, Math.floor(width / cellSize));
           gridH = Math.max(minGridH, Math.floor(height / cellSize));
@@ -384,8 +390,8 @@
         function renderPointerAura() {
           if (!pointer.active || pointer.energy <= 0.02) return;
           const c = neonPalette[pointer.colorIndex];
-          const coreRadius = (isTouch ? 24 : 20) + pointer.energy * (isTouch ? 38 : 46);
-          const haloRadius = coreRadius * (isTouch ? 2.8 : 3.2);
+          const coreRadius = (lowPower ? 14 : (isTouch ? 24 : 20)) + pointer.energy * (lowPower ? 24 : (isTouch ? 38 : 46));
+          const haloRadius = coreRadius * (lowPower ? 2.1 : (isTouch ? 2.8 : 3.2));
 
           const halo = fluidCtx.createRadialGradient(
             pointer.screenX, pointer.screenY, 0,
@@ -461,12 +467,14 @@
 
           fluidCtx.save();
           fluidCtx.globalCompositeOperation = "lighter";
-          fluidCtx.filter = isTouch ? "blur(8px) saturate(168%)" : "blur(10px) saturate(182%)";
-          fluidCtx.globalAlpha = isTouch ? 0.7 : 0.8;
+          fluidCtx.filter = lowPower ? "none" : (isTouch ? "blur(8px) saturate(168%)" : "blur(10px) saturate(182%)");
+          fluidCtx.globalAlpha = lowPower ? 0.72 : (isTouch ? 0.7 : 0.8);
           fluidCtx.drawImage(lowCanvas, 0, 0, width, height);
-          fluidCtx.filter = isTouch ? "blur(12px) saturate(176%)" : "blur(20px) saturate(196%)";
-          fluidCtx.globalAlpha = isTouch ? 0.16 : 0.3;
-          fluidCtx.drawImage(lowCanvas, 0, 0, width, height);
+          if (!lowPower) {
+            fluidCtx.filter = isTouch ? "blur(12px) saturate(176%)" : "blur(20px) saturate(196%)";
+            fluidCtx.globalAlpha = isTouch ? 0.16 : 0.3;
+            fluidCtx.drawImage(lowCanvas, 0, 0, width, height);
+          }
           fluidCtx.restore();
 
           fluidCtx.globalCompositeOperation = "screen";
@@ -510,6 +518,8 @@
         }
 
         function disturbAt(clientX, clientY, nowMs) {
+          if (lowPower && nowMs - lastDisturbTs < 14) return;
+          lastDisturbTs = nowMs;
           const pos = pointerToGrid(clientX, clientY);
           if (!pointer.active) {
             pointer.lastX = pos.x;
@@ -523,7 +533,7 @@
           const prevScreenY = pointer.screenY || clientY;
           const dxPx = clientX - prevScreenX;
           const dyPx = clientY - prevScreenY;
-          const touchGain = isTouch ? 2.45 : 3.2;
+          const touchGain = lowPower ? 2.05 : (isTouch ? 2.45 : 3.2);
 
           // Pixel-normalized force keeps streak shape proportional on portrait screens.
           pointer.vx += (dxPx / cellRef) * touchGain;
@@ -539,7 +549,7 @@
           pointer.lastX = pos.x;
           pointer.lastY = pos.y;
           pointer.active = true;
-          pointer.expires = nowMs + 200;
+          pointer.expires = nowMs + (lowPower ? 150 : 200);
         }
 
         let last = performance.now();
@@ -557,7 +567,8 @@
           accumulator += frameDt;
 
           let steps = 0;
-          while (accumulator >= fixedStep && steps < 3) {
+          const maxSteps = lowPower ? 2 : 3;
+          while (accumulator >= fixedStep && steps < maxSteps) {
             stepFluid(fixedStep, nowMs);
             accumulator -= fixedStep;
             steps++;
