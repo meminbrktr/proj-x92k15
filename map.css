@@ -1,10 +1,10 @@
-:root{
-  --bg:#050a08;
-  --bg-soft:#0b1f18;
-  --accent:#1f7a5c;
-  --accent2:#5df2c1;
-  --accent-soft:#b9ffe9;
-  --text:#eafff6;
+﻿:root{
+  --bg:#060405;
+  --accent:#c1121b;
+  --accent2:#ff6b9a;
+  --rose-dark:#220204;
+  --elite-black:#020202;
+  --text:#fff6f7;
 }
 
 /* RESET */
@@ -17,21 +17,36 @@
 html,body{
   height:100%;
   font-family:'Montserrat',sans-serif;
-  background:
-    radial-gradient(circle at 20% 15%, #102d23 0%, var(--bg) 60%);
+  background-color:#040405;
   color:var(--text);
   overflow-x:hidden;
   -webkit-font-smoothing:antialiased;
 }
 
-/* Romantik üst ışık */
+body{
+  position:relative;
+  isolation:isolate;
+  background:
+    radial-gradient(120% 90% at 50% -12%, rgba(255,255,255,0.04), rgba(255,255,255,0) 54%),
+    radial-gradient(140% 120% at 50% 60%, #0b0b0d 0%, #040405 62%, #020203 100%);
+}
+
+#fluid-bg{
+  position:fixed;
+  inset:0;
+  width:100%;
+  height:100%;
+  display:block;
+  z-index:0;
+  pointer-events:none;
+}
+/* Elit karartma / romantik Ä±ÅŸÄ±k */
 .overlay{
   position:fixed;
   inset:0;
   background:
-    radial-gradient(circle at top,
-      rgba(93,242,193,0.08),
-      transparent 65%);
+    radial-gradient(100% 80% at 50% 0%, rgba(255,255,255,0.03), rgba(255,255,255,0) 72%),
+    linear-gradient(180deg, rgba(1,1,1,0.12), rgba(1,1,1,0.28));
   pointer-events:none;
   z-index:1;
 }
@@ -40,7 +55,6 @@ html,body{
 
 .hero{
   min-height:100vh;
-  min-height:100svh;
   display:flex;
   flex-direction:column;
   justify-content:center;
@@ -53,24 +67,24 @@ html,body{
 
 .hero h1{
   font-family:'Playfair Display',serif;
-  font-size:clamp(2.5rem,6vw,4rem);
-  letter-spacing:1.5px;
+  font-size:clamp(2.6rem,6vw,4.2rem);
+  letter-spacing:2px;
   color:var(--accent2);
-  text-shadow:0 10px 35px rgba(93,242,193,0.25);
+  text-shadow:0 14px 40px rgba(193,18,27,0.15);
   margin-bottom:18px;
 }
 
 .hero p{
   max-width:640px;
-  font-size:1.05rem;
-  line-height:1.8;
+  font-size:1.1rem;
+  line-height:1.7;
   opacity:.9;
-  color:var(--accent-soft);
+  color:#ffdfe6;
 }
 
 .scroll{
   margin-top:42px;
-  font-size:.8rem;
+  font-size:.85rem;
   opacity:.55;
   letter-spacing:.12em;
 }
@@ -88,27 +102,34 @@ html,body{
 .map-frame{
   width:100%;
   max-width:920px;
-  aspect-ratio:16/9;
-  border-radius:24px;
+  aspect-ratio:16 / 9;
+  border-radius:26px;
   overflow:hidden;
-  background:linear-gradient(180deg,#0c241c,#071410);
-  border:1px solid rgba(93,242,193,0.15);
+
+  background:linear-gradient(180deg,#120204,#070203);
+  border:1px solid rgba(255,255,255,0.06);
+
   box-shadow:
-    0 30px 80px rgba(0,0,0,.7),
-    0 0 60px rgba(93,242,193,.15);
-  transition:all .6s ease;
+    0 30px 80px rgba(0,0,0,0.75),
+    inset 0 0 0 1px rgba(255,255,255,0.03);
+
+  transform:scale(.97);
+  transition:transform .8s cubic-bezier(.16,.9,.24,1),
+             box-shadow .6s;
 }
 
 .map-frame:hover{
-  transform:scale(1.02);
+  transform:scale(1);
   box-shadow:
-    0 40px 100px rgba(93,242,193,.25);
+    0 40px 100px rgba(193,18,27,0.25),
+    inset 0 0 0 1px rgba(255,255,255,0.05);
 }
 
 .map-frame iframe{
   width:100%;
   height:100%;
   border:none;
+  filter:saturate(1.05) contrast(1.05);
 }
 
 /* ================= STORY ================= */
@@ -118,11 +139,13 @@ html,body{
   margin:110px auto;
   padding:0 20px;
   text-align:center;
+  position:relative;
+  z-index:4;
 }
 
 .story h2{
   font-family:'Playfair Display',serif;
-  font-size:2.3rem;
+  font-size:2.5rem;
   margin-bottom:28px;
   color:var(--accent2);
 }
@@ -130,64 +153,182 @@ html,body{
 .story p{
   font-size:1.05rem;
   line-height:1.9;
-  color:var(--accent-soft);
+  opacity:.95;
+  color:#ffdfe6;
 }
 
-/* ================= MEMORY ================= */
+/* ================= MEMORY CARDS ================= */
 
 .memory{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-  gap:28px;
-  padding:70px 20px 120px;
+  gap:34px;
+  padding:70px 20px 130px;
   max-width:1000px;
   margin:0 auto;
+  position:relative;
+  z-index:4;
 }
 
 .card{
   background:
     linear-gradient(180deg,
-      rgba(255,255,255,0.04),
+      rgba(255,255,255,0.05),
       rgba(255,255,255,0.02));
-  border:1px solid rgba(93,242,193,0.2);
-  border-radius:20px;
-  padding:30px 20px;
+
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:22px;
+  padding:34px 22px;
   text-align:center;
-  backdrop-filter:blur(10px);
-  box-shadow:0 20px 50px rgba(0,0,0,.45);
-  transition:all .4s ease;
+  backdrop-filter:blur(8px);
+
+  box-shadow:0 18px 50px rgba(0,0,0,0.45);
+  transition:transform .5s ease,
+             box-shadow .5s ease,
+             background .5s;
 }
 
 .card:hover{
-  transform:translateY(-10px);
-  box-shadow:0 30px 70px rgba(93,242,193,.25);
+  transform:translateY(-12px);
+  background:
+    linear-gradient(180deg,
+      rgba(255,255,255,0.08),
+      rgba(255,255,255,0.04));
+
+  box-shadow:0 30px 70px rgba(193,18,27,0.25);
 }
 
 .card h3{
   font-family:'Playfair Display',serif;
-  font-size:1.6rem;
+  font-size:1.7rem;
   margin-bottom:14px;
   color:var(--accent2);
 }
 
 .card p{
   font-size:.95rem;
-  color:var(--accent-soft);
+  opacity:.9;
+  color:#ffdfe6;
 }
 
-/* ================= SLIDER ================= */
+/* ================= FOOTER ================= */
 
+footer{
+  text-align:center;
+  padding:50px 20px;
+  font-size:.85rem;
+  letter-spacing:.12em;
+  opacity:.6;
+  color:#ffdfe6;
+}
+
+/* ================= MOBÄ°L ================= */
+
+@media(max-width:768px){
+
+  .hero{
+    min-height:100svh;
+    padding:70px 16px 40px;
+  }
+
+  .hero h1{
+    font-size:clamp(2.1rem,8vw,2.9rem);
+    letter-spacing:1.4px;
+  }
+
+  .hero p{
+    font-size:1rem;
+  }
+
+  .scroll{display:none;}
+
+  .map-section{
+    padding:40px 12px;
+  }
+
+  .map-frame{
+    aspect-ratio:3 / 4;
+    border-radius:18px;
+    transform:none;
+  }
+
+  .map-frame:hover{
+    transform:none;
+  }
+
+  .story{
+    margin:80px auto;
+  }
+
+  .story h2{
+    font-size:clamp(1.8rem,6vw,2.2rem);
+  }
+
+  .story p{
+    font-size:1rem;
+  }
+
+  .memory{
+    gap:22px;
+    padding:50px 16px 100px;
+  }
+
+  .card{
+    padding:26px 18px;
+  }
+
+  .card:hover{
+    transform:none;
+  }
+
+}
+
+@media(max-width:420px){
+  .map-frame{
+    aspect-ratio:4 / 5;
+  }
+
+  footer{
+    font-size:.75rem;
+    padding:36px 16px;
+  }
+}
+/* ======================
+   🎵 SPOTIFY STYLE CARD
+   ====================== */
+
+.spotify-section{
+  display:flex;
+  justify-content:center;
+  padding:100px 20px 140px;
+  position:relative;
+  z-index:4;
+}
+
+.spotify-card{
+  width:100%;
+  max-width:340px;
+  background:#121212;
+  border-radius:18px;
+  padding:18px;
+  box-shadow:0 25px 70px rgba(0,0,0,.8);
+}
+
+/* Kapak çerçevesi */
+.cover-frame{
+  border-radius:14px;
+  padding:4px;
+  background:linear-gradient(135deg,#1db954,#1ed760);
+  margin-bottom:18px;
+}
+
+/* Slider */
 .cover-slider{
   position:relative;
   width:100%;
-  max-width:340px;
-  margin:0 auto;
   aspect-ratio:1/1;
-  border-radius:18px;
+  border-radius:10px;
   overflow:hidden;
-  box-shadow:
-    0 25px 70px rgba(0,0,0,.7),
-    0 0 50px rgba(93,242,193,.15);
 }
 
 .cover-slider img{
@@ -204,39 +345,41 @@ html,body{
   opacity:1;
 }
 
-/* ================= SPOTIFY ================= */
-
-.spotify-section{
-  display:flex;
-  justify-content:center;
-  padding:90px 20px 130px;
+/* Şarkı bilgisi */
+.track-info h3{
+  font-size:1.1rem;
+  font-weight:600;
+  margin-bottom:4px;
+  color:#ffffff;
 }
 
-.spotify-card{
-  width:100%;
-  max-width:320px;
-  background:#0c1713;
-  border-radius:18px;
-  padding:18px;
-  box-shadow:
-    0 25px 70px rgba(0,0,0,.8),
-    0 0 40px rgba(93,242,193,.15);
+.track-info span{
+  font-size:.9rem;
+  opacity:.7;
+  color:#ffffff;
 }
 
+/* Progress bar */
 .progress{
   width:100%;
   height:4px;
-  background:#1a2e26;
+  background:#2a2a2a;
   border-radius:2px;
-  margin:18px 0;
+  margin:18px 0 16px;
   overflow:hidden;
 }
 
 .progress-fill{
   width:42%;
   height:100%;
-  background:var(--accent2);
+  background:#1db954;
   animation:play 12s linear infinite;
+}
+
+/* Kontroller */
+.controls{
+  display:flex;
+  justify-content:center;
 }
 
 .play-btn{
@@ -244,57 +387,30 @@ html,body{
   height:48px;
   border-radius:50%;
   border:none;
-  background:var(--accent2);
+  background:#1db954;
   color:#000;
+  font-size:18px;
   cursor:pointer;
+  transition:transform .2s ease;
 }
 
+.play-btn:hover{
+  transform:scale(1.08);
+}
+
+/* Progress animasyonu */
 @keyframes play{
   0%{width:0%}
   100%{width:100%}
 }
 
-/* ================= FOOTER ================= */
-
-footer{
-  text-align:center;
-  padding:50px 20px;
-  font-size:.8rem;
-  opacity:.6;
-  color:var(--accent-soft);
-}
-
-/* ================= MOBİL ================= */
-
-@media(max-width:768px){
-
-  .hero{
-    min-height:100svh;
-    padding:70px 16px 40px;
-  }
-
-  .hero h1{
-    font-size:clamp(2rem,8vw,2.6rem);
-  }
-
-  .map-section{
-    padding:40px 12px;
-  }
-
-  .map-frame{
-    aspect-ratio:3/4;
-  }
-
-  .memory{
-    gap:20px;
-    padding:50px 16px 100px;
-  }
-
-  .card{
-    padding:22px 16px;
-  }
-
-  .spotify-section{
-    padding:60px 16px 100px;
+/* Mobil */
+@media(max-width:480px){
+  .spotify-card{
+    max-width:300px;
   }
 }
+
+
+
+

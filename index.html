@@ -18,7 +18,8 @@
         </head>
         <body>
             <!-- 🗺️ Haritaya Git Butonu -->
-<a href="map.html" class="map-btn" aria-label="Haritaya git">
+<a href="map.html" class="map-btn hidden" id="mapBtn" aria-label="Haritaya git">
+
    AÇIL ARTIK
 </a>
 
@@ -71,7 +72,7 @@
 
             <div class="page" data-index="1" role="article" tabindex="0">
             <div class="inner">
-                <h3>YANINDAYIM</h3>
+                <h3>SENİ ÇOK SEVİYORUM</h3>
                 <p> Geleceğe dair bir beklentim oluşmasının temel sebebi olduğun için sabah mutlu uyanıp gece mutlu uyumama vesile olduğun için
                 hayallerini benimle kurup beni önemsediğin için teşekkür ederim. Seninle birlikte geçirdiğim her an, bu hayatı önemini bir kez daha anladım fısktıcım, bana yavaş yavaş güveninin artışı </p>
             </div>
@@ -79,14 +80,14 @@
 
             <div class="page" data-index="2" role="article" tabindex="0">
             <div class="inner">
-                <h3>Küçük Sürpriz</h3>
+                <h3>SENİ ÇOK SEVİYORUM</h3>
                 <p>Sana hazırladığım o küçük hediye yüzündeki ifadeyi görmek içindi. Her anın kıymetli.</p>
             </div>
             </div>
 
             <div class="page" data-index="3" role="article" tabindex="0">
             <div class="inner">
-                <h3>Gelecek</h3>
+                <h3>SENİ ÇOK SEVİYORUM</h3>
                 <p>Seninle daha nice an biriktirmek istiyorum; hep yanında olmak en büyük dileğim.</p>
             </div>
             </div>
@@ -197,6 +198,7 @@
     const val = pw.value.trim();
     if(val === getReal()){
       sessionStorage.setItem('anniv_unlocked','1');
+      document.getElementById('mapBtn').classList.remove('hidden');
       showCongrats();
       return;
     }
@@ -323,6 +325,7 @@
     hideGate();
     resetPages();
     showDiary();
+    document.getElementById('mapBtn').classList.remove('hidden');
   }
 
 function triggerJasminePetals(){
