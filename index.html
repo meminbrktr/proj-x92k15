@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <link rel="stylesheet" href="style.css" />
-    <title>Zeynep Sümeyra için — Özel Giriş</title>
+    <title>Seni Seviyorum</title>
         <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400&display=swap" rel="stylesheet">
     <style>
         
@@ -17,7 +17,7 @@
         </style>
         </head>
         <body>
-            <!-- 🗺️ Haritaya Git Butonu -->
+          
 <a href="map.html" class="map-btn hidden" id="mapBtn" aria-label="Haritaya git">
 
    AÇIL ARTIK
@@ -51,7 +51,7 @@
         <main class="stage" id="stage" aria-live="polite">
             <div class="petals" id="petals"></div>
 
-        <!-- Ana sayfa: ortada açılan ajanda -->
+  
         <div class="diary" id="diary" aria-hidden="true">
             <div class="journal" aria-hidden="false">
             <div class="book" id="book" role="region" aria-label="Günlük">
@@ -61,7 +61,7 @@
             </div>
 
 
-            <!-- Sayfalar (ilk sayfa en üstte) -->
+
             <div class="page" data-index="0" role="article" tabindex="0">
             <div class="inner">
                 <h3>TEBRİKLER FISTIK</h3>
@@ -103,7 +103,7 @@
             </div>
         </div>
         </main>
-<!-- 🎉 Tebrik Kartı -->
+
 <div class="overlay hidden" id="congrats">
   <div class="card" style="max-width:420px">
     <h2>Hoş geldin fıstık</h2>
@@ -135,10 +135,10 @@
   let isFlipping = false;
   let petalsPlayed = false;
 
-  // 🔒 Geri animasyonunda sayfa clicklerini kilitler
+
   let suppressPageClick = false;
 
-  // 🔐 basit obfuskasyon
+
   function getReal(){
     const enc = [50^17,57^17,50^17,51^17,49^17,54^17,54^17];
     return String.fromCharCode(...enc.map(n => n ^ 17));
@@ -214,7 +214,7 @@
     if(e.key==='Enter') unlock();
   });
 
-  // 📖 sayfa çevirme
+
   function performFlip(page){
     if(!page) return;
     const idx = Number(page.dataset.index);
@@ -258,7 +258,7 @@
     isFlipping = true;
     suppressPageClick = true;
 
-    // 👉 Kapak açık + hiç sayfa çevrilmediyse kapağı kapat
+
     if(hasOpenedCover && current === 0){
       book.classList.remove('open');
       hasOpenedCover = false;
@@ -277,7 +277,7 @@
       return;
     }
 
-    // 🔥 KRİTİK: önce current geri alınır
+
     current--;
 
     const page = pages[current];
@@ -299,7 +299,7 @@
   nextBtn.addEventListener('click',flipForward);
   prevBtn.addEventListener('click',flipBackward);
 
-  // 👉 Sayfaya tıklayınca ileri (geri bug'ı burada çözülüyor)
+
   pages.forEach(p=>{
     p.addEventListener('click',()=>{
       if(suppressPageClick) return;

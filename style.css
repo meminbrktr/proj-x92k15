@@ -47,7 +47,7 @@
             40%,60%{transform:translateX(6px)}
         }
 
-        /* sahne: daha olgun ve tatlı popuplar, yüzen yaprak/petal */
+
         .stage{position:relative;min-height:100vh;overflow:hidden;padding:48px 20px;text-align:center}
         .petals{position:absolute;inset:0;pointer-events:none;z-index:0}
         .petal{
@@ -81,7 +81,7 @@
 
         .small{font-size:14px;opacity:.9;margin-top:22px;display:flex;gap:10px;align-items:center;justify-content:center;z-index:6}
 
-        /* küçük parıltılar / sparkles (basit, gerektiğinde kullanılacak) */
+    
         .sparkle{
             position:absolute;pointer-events:none;width:8px;height:8px;border-radius:50%;z-index:40;
             background:radial-gradient(circle at 30% 30%, #fff, rgba(255,255,255,0.8));box-shadow:0 6px 18px rgba(255,200,200,0.14);
@@ -94,7 +94,7 @@
             100%{transform:translateY(-78px) scale(.9);opacity:0}
         }
 
-        /* Günlük / ajanda stili (gerçekçi kitap animasyonları) */
+  
         .diary {
             position:relative;
             z-index:5;
@@ -134,11 +134,11 @@
             will-change:transform;
         }
 
-        /* closed book slight tilt and shadow */
+      
         .book { transform: rotateX(4deg) translateZ(0); }
         .diary.show .book { transform: rotateX(0deg) translateZ(0) scale(1); }
 
-        /* COVER */
+     
         .cover {
             position:absolute;
             inset:0;
@@ -175,7 +175,7 @@
             color:#ffdfe6;
         }
 
-        /* PAGES (paper-like) */
+       
         .page {
             position:absolute;
             inset:12px;
@@ -195,13 +195,13 @@
             line-height:1.5;
             cursor:pointer;
 
-            /* initial subtle tilt to simulate stacked pages */
+        
             transition: transform 900ms cubic-bezier(.2,.85,.22,1), box-shadow .5s, z-index .2s;
             perspective:1400px;
             will-change: transform, z-index;
         }
 
-        /* page edge and texture */
+    
         .page::before{
             content:"";
             position:absolute;
@@ -215,23 +215,23 @@
             transform:translateZ(1px);
         }
 
-        /* stacking: first page visually on top */
+      
         .page[data-index="0"]{z-index:70}
         .page[data-index="1"]{z-index:68}
         .page[data-index="2"]{z-index:66}
         .page[data-index="3"]{z-index:64}
         .page[data-index="4"]{z-index:62}
 
-        /* flipped state (realistic page turn) */
+      
         .page.flipped{
             transform: rotateY(-180deg) translateZ(0.5px);
             box-shadow:0 6px 18px rgba(0,0,0,0.35);
         }
 
-        /* subtle motion while hovering */
+      
         .page:hover{ transform: translateY(-6px) rotateY(0deg); box-shadow:0 22px 40px rgba(0,0,0,0.35) }
 
-        /* İç sayfa içeriği */
+      
         .page .inner{
             width:100%;
             transform:translateZ(2px);
@@ -266,14 +266,14 @@
     margin:0;
 }
 .page {
-    overflow: hidden; /* dış taşmayı kapat */
+    overflow: hidden; 
 }
 
 .page .inner{
     width:100%;
     height:100%;
     overflow-y:auto;
-    padding-right:8px; /* scrollbar metne girmesin */
+    padding-right:8px; 
 }
 
 .page .inner::-webkit-scrollbar {
@@ -298,7 +298,7 @@
 
 .journal{
     width: min(92vw, 520px);
-    aspect-ratio: 3 / 4.2; /* defter oranı */
+    aspect-ratio: 3 / 4.2; 
     height: auto;
     perspective: 2000px;
 }
@@ -359,7 +359,7 @@
     transform: rotateY(-2deg) translateY(-3px);
 }
 
-/* 🌸 Yasemin Yaprakları */
+
 .petals{
     position:absolute;
     inset:0;
@@ -387,7 +387,7 @@
 
 
 .cover-title {
-    color: #3b1f23; /* bordo-mürekkep */
+    color: #3b1f23; 
 }
 
 .cover-title {
@@ -453,7 +453,7 @@
     }
 }
 
-/* küçük varyasyonlar */
+
 .petal.small{ width:14px; height:9px; opacity:.7 }
 .petal.large{ width:26px; height:18px }
 
@@ -476,7 +476,7 @@
 }
 
 
-/* 🗺️ Anı Yeri – elit & romantik harita butonu */
+
 .map-btn{
     position:fixed;
     top:22px;
@@ -516,7 +516,7 @@
         color .35s;
 }
 
-/* hover = lüks davet hissi */
+
 .map-btn:hover{
     transform: translateY(-3px);
     letter-spacing:0.14em;
@@ -527,7 +527,7 @@
         inset 0 0 0 1px rgba(255,255,255,0.06);
 }
 
-/* küçük romantik ikon */
+
 .map-btn::before{
     content:"📍";
     margin-right:6px;
